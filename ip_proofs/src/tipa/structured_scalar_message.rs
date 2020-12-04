@@ -121,6 +121,75 @@ where
 
         Ok(gipa_valid && base_valid)
     }
+
+    pub fn verify_with_unfolded_right_message(
+        v_srs: &VerifierSRS<P>,
+        ck_t: &IPC::Key,
+        com: (&LMC::Output, &IPC::Output),
+        scalars: Vec<P::Fr>,
+        proof: &TIPAWithSSMProof<IP, LMC, IPC, P, D>,
+    ) -> Result<bool, Error> {
+        let (base_com, mut transcript) = GIPA::verify_recursive_challenge_transcript(
+            (com.0, &P::Fr::zero(), com.1),
+            &proof.gipa_proof,
+        )?;
+        let transcript_inverse = transcript.iter().map(|x| x.inverse().unwrap()).collect();
+
+        let ck_a_final = &proof.final_ck;
+        let ck_a_proof = &proof.final_ck_proof;
+
+        // KZG challenge point
+        let mut counter_nonce: usize = 0;
+        let c = loop {
+            let mut hash_input = Vec::new();
+            hash_input.extend_from_slice(&counter_nonce.to_be_bytes()[..]);
+            //TODO: Should use CanonicalSerialize instead of ToBytes
+            hash_input.extend_from_slice(&to_bytes![transcript.first().unwrap(), ck_a_final]?);
+            if let Some(c) = LMC::Scalar::from_random_bytes(&D::digest(&hash_input)) {
+                break c;
+            };
+            counter_nonce += 1;
+        };
+
+        // Check commitment key
+        let ck_a_valid = verify_commitment_key_g2_kzg_opening(
+            v_srs,
+            &ck_a_final,
+            &ck_a_proof,
+            &transcript_inverse,
+            &<P::Fr>::one(),
+            &c,
+        )?;
+
+        // Compute final scalar
+        assert!(scalars.len().is_power_of_two());
+        let mut m_b = scalars;
+
+        transcript.reverse();
+        for c in transcript {
+            let split = m_b.len() / 2;
+            let m_b_1 = &m_b[..split];
+            let m_b_2 = &m_b[split..];
+            let c_inv = c.inverse().unwrap();
+            m_b = m_b_2
+                .iter()
+                .map(|b| mul_helper(b, &&c_inv))
+                .zip(m_b_1)
+                .map(|(b_1, b_2)| b_1.clone() + &b_2.clone())
+                .collect::<Vec<P::Fr>>();
+        }
+        assert_eq!(m_b.len(), 1);
+        let b_base = m_b[0];
+
+        // Verify base inner product commitment
+        let (com_a, _, com_t) = base_com;
+        let a_base = vec![proof.gipa_proof.r_base.0.clone()];
+        let t_base = vec![IP::inner_product(&a_base, &vec![b_base])?];
+        let base_valid = LMC::verify(&vec![ck_a_final.clone()], &a_base, &com_a)?
+            && IPC::verify(&vec![ck_t.clone()], &t_base, &com_t)?;
+
+        Ok(ck_a_valid && base_valid)
+    }
 }
 
 pub struct TIPAWithSSM<IP, LMC, IPC, P, D> {
