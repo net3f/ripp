@@ -11,6 +11,7 @@ use crate::{
         prove_commitment_key_kzg_opening, structured_generators_scalar_power,
         verify_commitment_key_g2_kzg_opening, TIPACompatibleSetup, VerifierSRS, SRS,
     },
+    mul_helper,
     Error,
 };
 use ark_dh_commitments::{identity::HomomorphicPlaceholderValue, DoublyHomomorphicCommitment};
