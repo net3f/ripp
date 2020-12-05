@@ -356,6 +356,7 @@ where
         )?;
 
         // Compute final scalar
+        let accountability = start_timer!(|| "accountability check");
         assert!(scalars.len().is_power_of_two());
         let mut m_b = scalars;
 
@@ -374,6 +375,7 @@ where
         }
         assert_eq!(m_b.len(), 1);
         let b_base = m_b[0];
+        end_timer!(accountability);
 
         // Verify base inner product commitment
         let (com_a, _, com_t) = base_com;
