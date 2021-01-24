@@ -168,3 +168,29 @@ impl<P: PairingEngine> ToBytes for ExtensionFieldElement<P> {
         self.0.write(&mut writer)
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use crate::ExtensionFieldElement;
+    use ark_ff::{ToBytes, PrimeField, BigInteger};
+    use ark_bls12_381::Bls12_381;
+    use ark_ec::PairingEngine;
+    use ark_serialize::CanonicalSerialize;
+
+    #[test]
+    fn test_gt_serialization() {
+        let bls_12_381_base_field_repr_size = <<Bls12_381 as PairingEngine>::Fq as PrimeField>::BigInt::NUM_LIMBS * 64 / 8;
+
+        let x = ExtensionFieldElement::<Bls12_381>::default();
+
+        let mut buf = Vec::new();
+        assert!(x.write(&mut buf).is_ok());
+        assert_eq!(buf.len(), 12 * bls_12_381_base_field_repr_size);
+
+        let mut buf = Vec::new();
+        assert!(x.0.serialize(&mut buf).is_ok());
+        assert_eq!(buf.len(), 12 * bls_12_381_base_field_repr_size);
+        assert_eq!(x.0.serialized_size(), 12 * bls_12_381_base_field_repr_size);
+    }
+}
