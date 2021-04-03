@@ -4,11 +4,11 @@ use ark_poly::polynomial::{
     univariate::DensePolynomial as UnivariatePolynomial, Polynomial, UVPolynomial,
 };
 
-use bench_utils::{end_timer, start_timer};
+use ark_std::{end_timer, start_timer};
 use std::marker::PhantomData;
 
+use ark_std::rand::Rng;
 use digest::Digest;
-use rand::Rng;
 
 use crate::{
     gipa::GIPAProof,
@@ -322,8 +322,8 @@ mod tests {
     use ark_bls12_381::Bls12_381;
     use ark_ec::PairingEngine;
     use ark_ff::UniformRand;
+    use ark_std::rand::{rngs::StdRng, SeedableRng};
     use blake2::Blake2b;
-    use rand::{rngs::StdRng, SeedableRng};
 
     const BIVARIATE_X_DEGREE: usize = 7;
     const BIVARIATE_Y_DEGREE: usize = 7;

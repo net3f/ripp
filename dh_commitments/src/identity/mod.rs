@@ -1,5 +1,5 @@
 use ark_ff::{bytes::ToBytes, fields::PrimeField};
-use rand::Rng;
+use ark_std::rand::Rng;
 use std::{
     io::{Result as IoResult, Write},
     marker::PhantomData,
@@ -66,7 +66,7 @@ impl<T: MulAssign<F> + Clone + Default + Eq, F: Clone> MulAssign<F> for Identity
 
 impl<T, F> DoublyHomomorphicCommitment for IdentityCommitment<T, F>
 where
-    T: ToBytes + Clone + Default + Eq + Add<T, Output = T> + MulAssign<F>,
+    T: ToBytes + Clone + Default + Eq + Add<T, Output = T> + MulAssign<F> + Send + Sync,
     F: PrimeField,
 {
     type Scalar = F;

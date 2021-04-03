@@ -1,6 +1,6 @@
 use ark_ec::group::Group;
 use ark_ff::{bytes::ToBytes, fields::PrimeField};
-use rand::Rng;
+use ark_std::rand::Rng;
 use std::{
     cmp::Eq,
     error::Error as ErrorTrait,
@@ -22,12 +22,16 @@ pub trait DoublyHomomorphicCommitment: Clone {
         + Clone
         + Default
         + Eq
+        + Send
+        + Sync
         + Add<Self::Message, Output = Self::Message>
         + MulAssign<Self::Scalar>;
     type Key: ToBytes
         + Clone
         + Default
         + Eq
+        + Send
+        + Sync
         + Add<Self::Key, Output = Self::Key>
         + MulAssign<Self::Scalar>;
     type Output: ToBytes
